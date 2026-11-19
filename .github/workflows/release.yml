@@ -1,0 +1,136 @@
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build Android Release (APK & AAB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Configure Signing Keys (with clean fallback)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding release keystore from GitHub Secrets..."
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "RELEASE_STORE_FILE=$RUNNER_TEMP/release.keystore" >> gradle.properties
+            echo "RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD" >> gradle.properties
+            echo "RELEASE_KEY_ALIAS=$KEY_ALIAS" >> gradle.properties
+            echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD" >> gradle.properties
+            echo "Signing keys configured successfully."
+          else
+            echo "Notice: KEYSTORE_BASE64 is not set; falling back to unsigned release build."
+          fi
+
+      - name: Build Release APK and AAB
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PappVersion="$TAG_VERSION" --stacktrace
+
+      - name: Collect Android Artifacts
+        run: |
+          mkdir -p android-artifacts
+          find composeApp/build/outputs/apk/release/ -name "*.apk" -exec cp {} android-artifacts/ \; 2>/dev/null || true
+          find composeApp/build/outputs/bundle/release/ -name "*.aab" -exec cp {} android-artifacts/ \; 2>/dev/null || true
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: android-artifacts/
+          if-no-files-found: error
+
+  build-linux:
+    name: Build Linux Native Package (.deb)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Packaging Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot dpkg-dev binutils
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Package Linux .deb
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          ./gradlew :composeApp:packageDeb -PappVersion="$TAG_VERSION" --stacktrace
+
+      - name: Collect Linux .deb Artifacts
+        run: |
+          mkdir -p linux-artifacts
+          find composeApp/build/compose/binaries/ -name "*.deb" -exec cp {} linux-artifacts/ \; 2>/dev/null || true
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb-artifacts
+          path: linux-artifacts/
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [build-android, build-linux]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: List Release Files
+        run: |
+          ls -la release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Librera Reader ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release-assets/*.apk
+            release-assets/*.aab
+            release-assets/*.deb
