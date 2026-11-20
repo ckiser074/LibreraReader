@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)         // <-- library, not application
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
 }
@@ -15,6 +15,7 @@ kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
+        publishLibraryVariants("release", "debug")
     }
 
     jvm("desktop") {
@@ -31,7 +32,7 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
-            implementation(compose.materialIconsExtended)
+            implementation("org.jetbrains.compose.material:material-icons-extended:1.7.3")
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
@@ -41,7 +42,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
 
-        val desktopMain by getting {
+        named("desktopMain") {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(libs.kotlinx.coroutinesSwing)
@@ -55,11 +56,7 @@ android {
     compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "mobi.librera5"
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = appVersionName
     }
 
     packaging {
@@ -73,7 +70,7 @@ android {
             isMinifyEnabled = false
         }
         debug {
-            isDebuggable = true
+            // debuggable by default for library
         }
     }
 
@@ -93,10 +90,10 @@ compose.desktop {
             packageVersion = appVersionName
             description = "Librera Reader - Modern Compose Multiplatform Book & Document Reader"
             copyright = "© 2026 Librera Authors"
-            debMaintainer = "foobnix <ivan.ivanenko@gmail.com>"
-            menuGroup = "Office"
 
             linux {
+                debMaintainer = "foobnix <ivan.ivanenko@gmail.com>"
+                menuGroup = "Office"
                 shortcut = true
                 iconFile.set(project.file("src/desktopMain/resources/icon.png"))
             }

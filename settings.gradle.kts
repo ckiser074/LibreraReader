@@ -41,4 +41,5 @@ include(":libDepPro")
 
 
 include(":composeApp")
+include(":androidApp")
 //include(":shared")

@@ -33,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Assemble Android Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew :androidApp:assembleDebug --stacktrace
 
       - name: Package Linux Native .deb
-        run: ./gradlew packageDeb --stacktrace
+        run: ./gradlew :composeApp:packageDeb --stacktrace

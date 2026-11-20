@@ -51,13 +51,13 @@ jobs:
       - name: Build Release APK and AAB
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          ./gradlew :composeApp:assembleRelease :composeApp:bundleRelease -PappVersion="$TAG_VERSION" --stacktrace
+          ./gradlew :androidApp:assembleRelease :androidApp:bundleRelease -PappVersion="$TAG_VERSION" --stacktrace
 
       - name: Collect Android Artifacts
         run: |
           mkdir -p android-artifacts
-          find composeApp/build/outputs/apk/release/ -name "*.apk" -exec cp {} android-artifacts/ \; 2>/dev/null || true
-          find composeApp/build/outputs/bundle/release/ -name "*.aab" -exec cp {} android-artifacts/ \; 2>/dev/null || true
+          find androidApp/build/outputs/apk/release/ -name "*.apk" -exec cp {} android-artifacts/ \; 2>/dev/null || true
+          find androidApp/build/outputs/bundle/release/ -name "*.aab" -exec cp {} android-artifacts/ \; 2>/dev/null || true
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
