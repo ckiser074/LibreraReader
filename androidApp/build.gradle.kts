@@ -38,9 +38,7 @@ extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
         release {
             isMinifyEnabled = false
             val releaseSigning = signingConfigs.findByName("release")
-            if (releaseSigning != null) {
-                signingConfig = releaseSigning
-            }
+            signingConfig = releaseSigning ?: signingConfigs.getByName("debug")
         }
     }
 

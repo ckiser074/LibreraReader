@@ -24,6 +24,15 @@
 - Added `android.experimental.disableCompileSdkChecks=true` to `gradle.properties` so AGP's `CheckAarMetadataWorkAction` allows the API 37.1 dependency on `android-37.0`.
 - Ensured `checkReleaseAarMetadata` remains enabled so its output directory is generated for downstream `BundleAar` packaging tasks (`bundleReleaseLocalLintAar`).
 
+### 3. APK Installation & Runtime Fixes
+#### Issue
+Generated release APK was unsigned when `RELEASE_STORE_FILE` secret was not configured, causing Android OS to reject installation ("App not installed as package appears to be invalid" / cannot run). Furthermore, `initAndroidStorage` was not called during activity startup, causing potential crashes upon storage access.
+
+#### Resolution
+- In `androidApp/build.gradle.kts`, set `signingConfig = releaseSigning ?: signingConfigs.getByName("debug")` for the release build type so CI release builds are always signed with a valid certificate.
+- In `MainActivity.kt`, invoked `initAndroidStorage(this)` in `onCreate()` to ensure platform storage is initialized before Compose draws.
+- Copied launcher icons and resources into `androidApp/src/main/res/` and explicitly added permissions to `androidApp/src/main/AndroidManifest.xml`.
+
 ---
 
 ## Session 2 — 2026-11-20
