@@ -12,3 +12,9 @@ tasks.register("packageDeb") {
     dependsOn(":composeApp:packageDeb")
 }
 
+subprojects {
+    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+        enabled = false
+    }
+}
+

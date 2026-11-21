@@ -70,3 +70,7 @@ dependencies {
     debugImplementation(libs.compose.uiTooling)
 }
 
+tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+    enabled = false
+}
+
