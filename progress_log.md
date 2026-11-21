@@ -20,9 +20,9 @@
 2. The GitHub Actions runner only provides `android-37.0` (API 37), making higher minor revisions unavailable.
 
 #### Resolution
-- Aligned `compose-material3` with `version.ref = "composeMultiplatform"` in `gradle/libs.versions.toml`.
+- Restored `compose-material3` to `version.ref = "material3"` (`1.13.0-rc01`) in `gradle/libs.versions.toml` so the published artifact resolves on Maven Central.
 - Added `android.experimental.disableCompileSdkChecks=true` to `gradle.properties`.
-- Disabled `*AarMetadata` verification tasks in `build.gradle.kts` and `androidApp/build.gradle.kts`.
+- Disabled `*AarMetadata` verification tasks in `build.gradle.kts` and `androidApp/build.gradle.kts` so the API 37.1 requirement check from `1.13.0-rc01` is bypassed on `android-37.0`.
 
 ---
 
