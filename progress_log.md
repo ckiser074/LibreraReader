@@ -21,8 +21,8 @@
 
 #### Resolution
 - Restored `compose-material3` to `version.ref = "material3"` (`1.13.0-rc01`) in `gradle/libs.versions.toml` so the published artifact resolves on Maven Central.
-- Added `android.experimental.disableCompileSdkChecks=true` to `gradle.properties`.
-- Disabled `*AarMetadata` verification tasks in `build.gradle.kts` and `androidApp/build.gradle.kts` so the API 37.1 requirement check from `1.13.0-rc01` is bypassed on `android-37.0`.
+- Added `android.experimental.disableCompileSdkChecks=true` to `gradle.properties` so AGP's `CheckAarMetadataWorkAction` allows the API 37.1 dependency on `android-37.0`.
+- Ensured `checkReleaseAarMetadata` remains enabled so its output directory is generated for downstream `BundleAar` packaging tasks (`bundleReleaseLocalLintAar`).
 
 ---
 
