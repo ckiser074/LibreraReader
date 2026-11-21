@@ -1,11 +1,34 @@
 # Librera Modernization Progress Log
 
 **Status**: Build Verification In Progress  
-**Last Updated**: 2026-11-20T07:53:00-05:00
+**Last Updated**: 2026-11-21T14:40:00-05:00
 
 ---
 
-## Session 2 — 2026-11-20 (Current Session)
+## Session 3 — 2026-11-21 (Current Session)
+
+### AGP 9 Compatibility Fix for KMP `:composeApp` Module
+
+#### Issue
+GitHub Actions CI/Release failed during the configuration phase of `:composeApp`:
+```
+The 'com.android.library' (or 'com.android.application') plugin is not compatible with the 'org.jetbrains.kotlin.multiplatform' plugin since AGP 9.0.
+```
+
+#### Root Cause
+In commit `dbfb1a645`, `android.builtInKotlin=false` and `android.newDsl=false` were inadvertently removed from `gradle.properties`. Without these properties, AGP 9 activates built-in Kotlin compilation by default and strictly rejects applying `com.android.library` alongside `org.jetbrains.kotlin.multiplatform` in `:composeApp`. Furthermore, commit `f79b78c02` removed `alias(libs.plugins.kotlinAndroid)` from `:androidApp` under the assumption of AGP 9 built-in Kotlin support.
+
+#### Resolution
+1. **Restored AGP 9 properties in [gradle.properties](file:///var/mnt/chad/git/LibreraReader/gradle.properties)**:
+   - Added `android.builtInKotlin=false` and `android.newDsl=false`.
+   - AGP warning suppressions (`android.sync.suppressAgpWarnings=UNSUPPORTED_PROJECT_OPTION_USE,DEPRECATED_DSL`) already present in `gradle.properties` ensure clean logs.
+2. **Restored Kotlin Android plugin**:
+   - Re-added `alias(libs.plugins.kotlinAndroid) apply false` in root [build.gradle.kts](file:///var/mnt/chad/git/LibreraReader/build.gradle.kts).
+   - Re-added `alias(libs.plugins.kotlinAndroid)` in [androidApp/build.gradle.kts](file:///var/mnt/chad/git/LibreraReader/androidApp/build.gradle.kts) so the Kotlin compiler options block compiles cleanly.
+
+---
+
+## Session 2 — 2026-11-20
 
 ### Key Architectural Fix: AGP 9+ KMP Module Split
 
